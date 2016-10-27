@@ -32,7 +32,7 @@ SqliteStore.prototype.connect = function (cb) {
     self._db.run('BEGIN', function () {
       tasks.forEach(function (task) {
         // TODO: Optimize (take out self._tableName evaluation)
-        self._db.run(`INSERT INTO ${self._tableName} (id, task, priority, lock) VALUES (?, ?, ?, ?)`, [task.taskId, task.serializedTask, task.priority, '']);
+        self._db.run(`INSERT OR REPLACE INTO ${self._tableName} (id, task, priority, lock) VALUES (?, ?, ?, ?)`, [task.taskId, task.serializedTask, task.priority, '']);
       })
       self._db.run('COMMIT', cb);
     });
