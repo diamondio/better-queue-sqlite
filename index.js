@@ -15,8 +15,7 @@ SqliteStore.prototype.connect = function (cb) {
     if (err) return cb(err);
     self._db.exec(`
       CREATE TABLE IF NOT EXISTS ${self._tableName} (id TEXT UNIQUE, lock TEXT, task TEXT, priority NUMERIC, added INTEGER PRIMARY KEY AUTOINCREMENT);
-      CREATE INDEX IF NOT EXISTS idTextIndex ON ${self._tableName} (id, lock);
-      CREATE INDEX IF NOT EXISTS otherindex ON ${self._tableName} (lock, priority desc, added);
+      CREATE INDEX IF NOT EXISTS priorityIndex ON ${self._tableName} (lock, priority desc, added);
       `, function (err) {
       if (err) return cb(err);
       self._db.get(`SELECT COUNT (*) FROM ${self._tableName} WHERE lock = ""`, function (err, results) {
@@ -101,7 +100,6 @@ SqliteStore.prototype.getRunningTasks = function (cb) {
     cb(null, tasks);
   });
 };
-
 
 SqliteStore.prototype.releaseLock = function (lockId, cb) {
   var self = this;
