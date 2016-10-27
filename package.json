@@ -1,0 +1,25 @@
+{
+  "name": "better-queue-sqlite",
+  "version": "1.0.0",
+  "description": "sqlite store for better-queue",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diamondio/better-queue-sqlite.git"
+  },
+  "keywords": [
+    "better",
+    "queue",
+    "sqlite",
+    "store"
+  ],
+  "author": "Diamond Inc",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/diamondio/better-queue-sqlite/issues"
+  },
+  "homepage": "https://github.com/diamondio/better-queue-sqlite#readme"
+}
