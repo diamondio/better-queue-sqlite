@@ -66,7 +66,8 @@ SqliteStore.prototype.putTask = function (taskId, task, priority, cb) {
     taskId,
     serializedTask,
     priority
-  }, cb);
+  });
+  setImmediate(cb);
 };
 
 
