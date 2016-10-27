@@ -23,13 +23,14 @@ SqliteStore.prototype.connect = function (cb) {
   });
 
   self._putCargo = new async.cargo(function (tasks, cb) {
-    self._db.run('BEGIN');
-    tasks.forEach(function (task) {
-      // TODO: Optimize (take out self._tableName evaluation)
-      self._db.run(`INSERT INTO ${self._tableName} (id, task, priority, lock) VALUES (?, ?, ?, ?)`, [task.taskId, task.serializedTask, task.priority, '']);
-    })
-    self._db.run('COMMIT', cb);
-  }, 50);
+    self._db.run('BEGIN', function () {
+      tasks.forEach(function (task) {
+        // TODO: Optimize (take out self._tableName evaluation)
+        self._db.run(`INSERT INTO ${self._tableName} (id, task, priority, lock) VALUES (?, ?, ?, ?)`, [task.taskId, task.serializedTask, task.priority, '']);
+      })
+      self._db.run('COMMIT', cb);
+    });
+  }, 3000);
 };
 
 
