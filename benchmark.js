@@ -9,7 +9,7 @@ test.benchmark('Sqlite', {
     cb(null, new Sql());
   },
   destroy: function (cb) { cb() }, // Pass
-  numItems: 200000,
+  numItems: 20000,
 }, function (err) {
   if (err) console.log ('Looks like there was an error', err);
   process.exit(0);

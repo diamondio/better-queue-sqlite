@@ -13,7 +13,11 @@ SqliteStore.prototype.connect = function (cb) {
   var self = this;
   self._db = new sqlite.Database(self._path, function (err) {
     if (err) return cb(err);
-    self._db.run(`CREATE TABLE IF NOT EXISTS ${self._tableName} (id TEXT UNIQUE, lock TEXT, task TEXT, priority NUMERIC, added INTEGER PRIMARY KEY AUTOINCREMENT)`, function (err) {
+    self._db.exec(`
+      CREATE TABLE IF NOT EXISTS ${self._tableName} (id TEXT UNIQUE, lock TEXT, task TEXT, priority NUMERIC, added INTEGER PRIMARY KEY AUTOINCREMENT);
+      CREATE INDEX IF NOT EXISTS idTextIndex ON ${self._tableName} (id, lock);
+      CREATE INDEX IF NOT EXISTS otherindex ON ${self._tableName} (lock, priority desc, added);
+      `, function (err) {
       if (err) return cb(err);
       self._db.get(`SELECT COUNT (*) FROM ${self._tableName} WHERE lock = ""`, function (err, results) {
         if (err) return cb(err);
@@ -116,7 +120,7 @@ SqliteStore.prototype.close = function (cb) {
 SqliteStore.prototype.takeFirstN = function (num, cb) {
   var self = this;
   var lockId = uuid.v4();
-  self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE ID IN (SELECT ID FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added ASC LIMIT ${num})`, [lockId, ''], function (err, result) {
+  self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE id IN (SELECT id FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added ASC LIMIT ${num})`, [lockId, ''], function (err, result) {
     if (err) return cb(err);
     cb(null, this.changes ? lockId : '');
   })
@@ -125,7 +129,7 @@ SqliteStore.prototype.takeFirstN = function (num, cb) {
 SqliteStore.prototype.takeLastN = function (num, cb) {
   var self = this;
   var lockId = uuid.v4();
-  self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE ID IN (SELECT ID FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added DESC LIMIT ${num})`, [lockId, ''], function (err, result) {
+  self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE id IN (SELECT id FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added DESC LIMIT ${num})`, [lockId, ''], function (err, result) {
     if (err) return cb(err);
     cb(null, this.changes ? lockId : '');
   })
