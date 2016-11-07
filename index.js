@@ -29,6 +29,8 @@ SqliteStore.prototype.connect = function (cb) {
   });
 
   self._putCargo = new async.cargo(function (tasks, cb) {
+    tasks = tasks.filter((task) => task !== 'dummy');
+    if (!tasks.length) return cb();
     self._db.run('BEGIN', function () {
       tasks.forEach(function (task) {
         // TODO: Optimize (take out self._tableName evaluation)
@@ -39,25 +41,34 @@ SqliteStore.prototype.connect = function (cb) {
   }, 3000);
 };
 
+SqliteStore.prototype._afterWritten = function (cb) {
+  this._putCargo.push('dummy', function () {
+    cb();
+  });
+}
 
 SqliteStore.prototype.getTask = function (taskId, cb) {
   var self = this;
-  self._db.all(`SELECT * FROM ${self._tableName} WHERE id = ? AND lock = ?`, [taskId, ''], function (err, rows) {
-    if (err) return cb(err);
-    if (!rows.length) return cb();
-    var row = rows[0];
-    try {
-      var savedTask = JSON.parse(row.task);
-    } catch (e) {
-      return cb('failed_to_deserialize_task');
-    }
-    cb(null, savedTask);
+  self._afterWritten(function () {
+    self._db.all(`SELECT * FROM ${self._tableName} WHERE id = ? AND lock = ?`, [taskId, ''], function (err, rows) {
+      if (err) return cb(err);
+      if (!rows.length) return cb();
+      var row = rows[0];
+      try {
+        var savedTask = JSON.parse(row.task);
+      } catch (e) {
+        return cb('failed_to_deserialize_task');
+      }
+      cb(null, savedTask);
+    });
   });
 };
 
 SqliteStore.prototype.deleteTask = function (taskId, cb) {
   var self = this;
-  self._db.run(`DELETE FROM ${self._tableName} WHERE id = ?`, [taskId], cb);
+  self._afterWritten(function () {
+    self._db.run(`DELETE FROM ${self._tableName} WHERE id = ?`, [taskId], cb);
+  });
 };
 
 
@@ -73,19 +84,22 @@ SqliteStore.prototype.putTask = function (taskId, task, priority, cb) {
     taskId,
     serializedTask,
     priority
-  }, cb);
+  });
+  cb();
 };
 
 
 SqliteStore.prototype.getLock = function (lockId, cb) {
   var self = this;
-  self._db.all(`SELECT id, task FROM ${self._tableName} WHERE lock = ?`, [lockId || ''], function (err, rows) {
-    if (err) return cb(err);
-    var tasks = {};
-    rows.forEach(function (row) {
-      tasks[row.id] = JSON.parse(row.task);
-    })
-    cb(null, tasks);
+  self._afterWritten(function () {
+    self._db.all(`SELECT id, task FROM ${self._tableName} WHERE lock = ?`, [lockId || ''], function (err, rows) {
+      if (err) return cb(err);
+      var tasks = {};
+      rows.forEach(function (row) {
+        tasks[row.id] = JSON.parse(row.task);
+      })
+      cb(null, tasks);
+    });
   });
 };
 
@@ -120,19 +134,24 @@ SqliteStore.prototype.close = function (cb) {
 SqliteStore.prototype.takeFirstN = function (num, cb) {
   var self = this;
   var lockId = uuid.v4();
-  self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE id IN (SELECT id FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added ASC LIMIT ${num})`, [lockId, ''], function (err, result) {
-    if (err) return cb(err);
-    cb(null, this.changes ? lockId : '');
-  })
+
+  self._afterWritten(function () {
+    self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE id IN (SELECT id FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added ASC LIMIT ${num})`, [lockId, ''], function (err, result) {
+      if (err) return cb(err);
+      cb(null, this.changes ? lockId : '');
+    });
+  });
 }
 
 SqliteStore.prototype.takeLastN = function (num, cb) {
   var self = this;
   var lockId = uuid.v4();
-  self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE id IN (SELECT id FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added DESC LIMIT ${num})`, [lockId, ''], function (err, result) {
-    if (err) return cb(err);
-    cb(null, this.changes ? lockId : '');
-  })
+  self._afterWritten(function () {
+    self._db.run(`UPDATE ${self._tableName} SET lock = ? WHERE id IN (SELECT id FROM ${self._tableName} WHERE lock = ? ORDER BY priority DESC, added DESC LIMIT ${num})`, [lockId, ''], function (err, result) {
+      if (err) return cb(err);
+      cb(null, this.changes ? lockId : '');
+    });
+  });
 }
 
 SqliteStore.prototype.close = function (cb) {
