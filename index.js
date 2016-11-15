@@ -106,7 +106,7 @@ SqliteStore.prototype.getLock = function (lockId, cb) {
 
 SqliteStore.prototype.getRunningTasks = function (cb) {
   var self = this;
-  self._db.all(`SELECT * FROM ${self._tableName}`, function (err, rows) {
+  self._db.all(`SELECT * FROM ${self._tableName} WHERE NOT lock = ?`, [''], function (err, rows) {
     if (err) return cb(err);
     var tasks = {};
     rows.forEach(function (row) {
