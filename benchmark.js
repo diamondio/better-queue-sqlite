@@ -1,5 +1,5 @@
 var test = require('better-queue-store-test');
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var Sql = require('.');
 
 
