@@ -1,6 +1,6 @@
 {
   "name": "better-queue-sqlite",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "sqlite store for better-queue",
   "main": "index.js",
   "scripts": {
