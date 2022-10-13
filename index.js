@@ -1,6 +1,6 @@
 var async  = require('async');
 var sqlite = require('sqlite3');
-var uuid   = require('node-uuid');
+var uuid   = require('uuid');
 
 function SqliteStore(opts) {
   opts = opts || {};

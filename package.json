@@ -24,8 +24,8 @@
   "homepage": "https://github.com/diamondio/better-queue-sqlite#readme",
   "dependencies": {
     "async": "^2.1.2",
-    "node-uuid": "^1.4.7",
-    "sqlite3": "4.0.7"
+    "sqlite3": "^5.1.2",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "better-queue-store-test": "^1.0.5",
